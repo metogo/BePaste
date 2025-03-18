@@ -8,6 +8,7 @@ yarn.lock
 
 # Build output
 dist/
+dist/**
 build/
 out/
 release/

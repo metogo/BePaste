@@ -18,21 +18,24 @@ let isVisible = false;
 // 创建窗口函数
 function createWindow() {
   const display = screen.getPrimaryDisplay();
-  const { width, height } = display.workAreaSize;
   const windowHeight = 330;
   
   mainWindow = new BrowserWindow({
-    width: width,
+    width: display.bounds.width,
     height: windowHeight,
     x: 0,
-    y: display.bounds.height - windowHeight, // 使用完整屏幕高度而不是工作区高度
+    y: display.bounds.height - windowHeight,
     frame: false,
     transparent: true,
     resizable: false,
     alwaysOnTop: true,
     skipTaskbar: true,
     show: false,
-    icon: path.join(__dirname, 'build/icon.icns'), // 添加这行
+    type: 'splash',  // 修改为 splash 类型
+    hasShadow: false,
+    titleBarStyle: 'hidden',
+    fullscreenable: false,
+    movable: false,  // 禁止移动
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -66,15 +69,47 @@ function updateWindowPosition() {
   if (!mainWindow) return;
   
   const display = screen.getPrimaryDisplay();
-  const { width } = display.workAreaSize;
-  const windowHeight = 330;
+  const { width, height } = display.bounds;
   
+  // 设置窗口位置和大小
   mainWindow.setBounds({
-    width: width,
-    height: windowHeight,
     x: 0,
-    y: display.bounds.height - windowHeight // 使用完整屏幕高度
+    y: height - 330,
+    width: width,
+    height: 330
   });
+
+  // 重新设置窗口层级和属性
+  mainWindow.setVisibleOnAllWorkspaces(true);
+  mainWindow.setAlwaysOnTop(true, 'screen-saver');
+  
+  // 设置窗口样式
+  if (process.platform === 'darwin') {
+    app.dock.hide(); // 隐藏 dock 图标
+  }
+}
+
+// 隐藏窗口
+function hideWindow() {
+  if (!mainWindow) return;
+  
+  mainWindow.hide();
+  isVisible = false;
+  // 不改变窗口类型，保持状态
+}
+
+// 显示窗口
+function showWindow() {
+  if (!mainWindow) return;
+  
+  // 先更新位置和属性，确保窗口状态正确
+  updateWindowPosition();
+  
+  // 显示窗口
+  mainWindow.show();
+  isVisible = true;
+  
+  mainWindow.webContents.send('update-clipboard-history', clipboardManager.getHistory());
 }
 
 // 切换窗口显示状态

@@ -315,5 +315,16 @@ async function setupShortcutConfig() {
   });
 }
 
+// 添加关闭按钮功能
+function setupCloseButton() {
+  const closeBtn = document.getElementById('closeBtn');
+  closeBtn.addEventListener('click', () => {
+    window.electronAPI.hideWindow();
+  });
+}
+
+// 在初始化时调用
+setupCloseButton();
+
 // 初始化时调用
 setupShortcutConfig();

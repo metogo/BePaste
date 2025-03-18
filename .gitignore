@@ -11,6 +11,17 @@ dist/
 build/
 out/
 release/
+*.zip
+*.dmg
+*.app
+
+# Electron specific
+.electron-builder.env
+node_modules.asar
+app.asar
+*.asar
+**/Electron Framework.framework/**
+**/Frameworks/**
 
 # macOS system files
 .DS_Store

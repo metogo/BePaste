@@ -1,0 +1,369 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  overflow: hidden;
+  height: 330px; /* 改回固定高度 */
+  -webkit-app-region: no-drag;
+  -webkit-user-select: none;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  width: 100%;
+  height: 330px; /* 与窗口高度保持一致 */
+  padding: 15px 20px;
+  display: flex;
+  flex-direction: column;
+  overflow-x: auto;
+}
+
+.cards-container {
+  display: flex;
+  gap: 15px;
+  height: 300px; /* 调整为固定高度 */
+  -webkit-app-region: no-drag;
+  padding: 10px 0;
+  white-space: nowrap;
+}
+
+.card {
+  flex: 0 0 250px;
+  min-width: 250px;
+  height: 250px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 15px;
+  cursor: pointer;
+  transition: transform 0.2s, background-color 0.2s;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-content {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 10; /* 显示10行文本 */
+  -webkit-box-orient: vertical;
+  white-space: normal;
+  word-wrap: break-word;
+  margin-bottom: 10px;
+}
+
+.card-timestamp {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* 自定义滚动条样式 */
+.cards-container::-webkit-scrollbar {
+  height: 6px;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.cards-container:hover::-webkit-scrollbar {
+  opacity: 1;
+}
+
+.cards-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+
+.cards-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 3px;
+  transition: background 0.3s ease;
+}
+
+.cards-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+/* 适配浅色主题的滚动条 */
+@media (prefers-color-scheme: light) {
+  .cards-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+  }
+  
+  .cards-container::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+  }
+  
+  .cards-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* 添加淡入淡出效果 */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.card {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* 添加暗黑模式支持 */
+@media (prefers-color-scheme: dark) {
+  body {
+    background-color: rgba(0, 0, 0, 0.7);
+    color: #fff;
+  }
+  
+  .card {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  .card:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+  
+  .card-timestamp {
+    color: rgba(255, 255, 255, 0.6);
+  }
+  
+  .cards-container::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  
+  .cards-container::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+  }
+  
+  .cards-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  body {
+    background-color: rgba(255, 255, 255, 0.9);
+    color: #333;
+  }
+  
+  .card {
+    background-color: rgba(0, 0, 0, 0.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .card:hover {
+    background-color: rgba(0, 0, 0, 0.08);
+  }
+  
+  .card-timestamp {
+    color: rgba(0, 0, 0, 0.5);
+  }
+  
+  .cards-container::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+  }
+  
+  .cards-container::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+  }
+  
+  .cards-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.3);
+  }
+}
+
+.search-container {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  /* padding: 15px 0; */
+  display: flex;
+  justify-content: center;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 50%;
+  margin: 0 auto;
+}
+
+.search-icon {
+  width: 20px;
+  height: 20px;
+  position: absolute;
+  left: 15px;
+  opacity: 0.7;
+}
+
+#searchInput {
+  width: 100%;
+  padding: 10px 20px 10px 45px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 25px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+#searchInput:focus {
+  outline: none;
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+}
+
+#searchInput::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.card-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.card-char-count {
+  font-size: 12px;
+  background: rgba(82, 109, 165, 0.3);
+  color: rgba(255, 255, 255, 0.9);
+  padding: 3px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(5px);
+}
+
+/* 适配浅色主题 */
+@media (prefers-color-scheme: light) {
+  .search-container {
+    background: rgba(255, 255, 255, 0.8);
+  }
+
+  #searchInput {
+    background: rgba(0, 0, 0, 0.05);
+    border-color: rgba(0, 0, 0, 0.1);
+    color: #333;
+  }
+
+  #searchInput:focus {
+    background: rgba(0, 0, 0, 0.08);
+    border-color: rgba(0, 0, 0, 0.2);
+  }
+
+  #searchInput::placeholder {
+    color: rgba(0, 0, 0, 0.4);
+  }
+
+  .card-char-count {
+    background: rgba(82, 109, 165, 0.15);
+    color: rgba(0, 0, 0, 0.7);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+}
+
+.settings-btn {
+  position: absolute;
+  right: 15px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 5px;
+  opacity: 0.7;
+  transition: opacity 0.3s;
+}
+
+.settings-btn:hover {
+  opacity: 1;
+}
+
+.shortcut-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.9);
+  padding: 20px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  z-index: 1000;
+}
+
+.shortcut-input {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin: 10px 0;
+  width: 200px;
+}
+
+@media (prefers-color-scheme: light) {
+  .shortcut-modal {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .shortcut-input {
+    background: rgba(0, 0, 0, 0.05);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    color: #333;
+  }
+}
+
+.shortcut-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+  justify-content: flex-end;
+}
+
+.save-btn, .cancel-btn {
+  padding: 6px 12px;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.save-btn {
+  background: #4CAF50;
+  color: white;
+}
+
+.save-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.cancel-btn {
+  background: #f5f5f5;
+  color: #333;
+}
+
+.save-btn:hover:not(:disabled) {
+  background: #45a049;
+}
+
+.cancel-btn:hover {
+  background: #e0e0e0;
+}

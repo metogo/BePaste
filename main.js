@@ -31,11 +31,9 @@ function createWindow() {
     alwaysOnTop: true,
     skipTaskbar: true,
     show: false,
-    type: 'splash',  // 修改为 splash 类型
+    type: 'splash',
     hasShadow: false,
-    titleBarStyle: 'hidden',
-    fullscreenable: false,
-    movable: false,  // 禁止移动
+    // 移除 titleBarStyle 和 titleBarOverlay
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -62,6 +60,14 @@ function createWindow() {
   screen.on('display-metrics-changed', updateWindowPosition);
   screen.on('display-added', updateWindowPosition);
   screen.on('display-removed', updateWindowPosition);
+
+  // 添加窗口快捷键处理
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.key.toLowerCase() === 'w' && input.meta) {
+      event.preventDefault();
+      hideWindow();
+    }
+  });
 }
 
 // 更新窗口位置

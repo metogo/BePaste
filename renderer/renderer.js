@@ -178,11 +178,11 @@ class VirtualScroller {
 }
 
 // 初始化虚拟滚动
+// 清理重复的事件监听器和初始化函数
 let virtualScroller = null;
 
 // 渲染剪贴板历史（使用虚拟滚动）
 function renderClipboardHistory(history) {
-  // 清空容器
   if (virtualScroller) {
     virtualScroller.destroy();
   }
@@ -190,7 +190,6 @@ function renderClipboardHistory(history) {
   cardsContainer.innerHTML = '';
   cardsContainer.style.position = 'relative';
   
-  // 如果没有历史记录
   if (!history || history.length === 0) {
     const emptyMessage = document.createElement('div');
     emptyMessage.className = 'empty-message';
@@ -199,248 +198,133 @@ function renderClipboardHistory(history) {
     return;
   }
   
-  // 创建虚拟滚动
   virtualScroller = new VirtualScroller(
     cardsContainer,
-    250, // 卡片高度
-    250, // 卡片宽度
+    250,
+    250,
     createCardElement
   );
   
-  // 设置数据
   virtualScroller.setItems(history);
 }
 
-// 监听键盘事件（合并所有键盘相关的处理）
-document.addEventListener('keydown', (event) => {
-  if (event.key === 'Escape') {
-    window.electronAPI.hideWindow();
-  } else if (event.key === 'ArrowLeft') {
-    cardsContainer.scrollBy({
-      left: -300,
-      behavior: 'smooth'
-    });
-  } else if (event.key === 'ArrowRight') {
-    cardsContainer.scrollBy({
-      left: 300,
-      behavior: 'smooth'
-    });
-  }
-});
-
-// 单一的历史更新处理
-window.electronAPI.onUpdateClipboardHistory((history) => {
-  clipboardHistory = history; // 保存完整历史
-  renderClipboardHistory(history);
-});
-
-// 初始化功能
-document.addEventListener('DOMContentLoaded', () => {
-  init();
-});
-
-async function init() {
-  const cardsContainer = document.getElementById('cardsContainer');
-  setupSearch();
-  await setupShortcutConfig();  // 确保等待设置完成
-  setupCloseButton();
-  setupClearButton();
+// 添加清空按钮事件处理
+function setupClearButton() {
+  const clearBtn = document.getElementById('clearBtn');
+  if (!clearBtn) return;
   
-  // 获取并渲染初始历史记录
-  const initialHistory = await window.electronAPI.getHistory();
-  if (initialHistory && initialHistory.length > 0) {
-    clipboardHistory = initialHistory;
-    renderClipboardHistory(initialHistory);
-  }
+  clearBtn.onclick = async () => {
+    try {
+      const confirmed = await window.electronAPI.showConfirmDialog('确定要清空所有历史记录吗？');
+      if (confirmed) {
+        const success = await window.electronAPI.clearHistory();
+        if (success) {
+          clipboardHistory = [];
+          renderClipboardHistory([]);
+        }
+      }
+    } catch (error) {
+      console.error('清空操作出错:', error);
+    }
+  };
 }
 
-// 启动应用
-init();
-
-// 监听滚动事件，实现平滑滚动
-// 添加滚动处理
-document.addEventListener('wheel', (event) => {
-  if (event.deltaY !== 0) {
-    event.preventDefault();
-    cardsContainer.scrollLeft += event.deltaY;
-  }
-}, { passive: false });
-
-// 修改触控板手势支持
-let isScrolling = false;
-let startX;
-let scrollLeft;
-
-cardsContainer.addEventListener('mousedown', (e) => {
-  isScrolling = true;
-  startX = e.pageX - cardsContainer.offsetLeft;
-  scrollLeft = cardsContainer.scrollLeft;
-});
-
-document.addEventListener('mousemove', (e) => {
-  if (!isScrolling) return;
-  e.preventDefault();
-  const x = e.pageX - cardsContainer.offsetLeft;
-  const walk = (x - startX) * 2;
-  cardsContainer.scrollLeft = scrollLeft - walk;
-});
-
-document.addEventListener('mouseup', () => {
-  isScrolling = false;
-});
-
-// 修改键盘导航支持
-document.addEventListener('keydown', (event) => {
-  if (event.key === 'ArrowLeft') {
-    cardsContainer.scrollBy({
-      left: -300,
-      behavior: 'smooth'
-    });
-  } else if (event.key === 'ArrowRight') {
-    cardsContainer.scrollBy({
-      left: 300,
-      behavior: 'smooth'
-    });
-  }
-});
-
-// 监nfrom主进程发来的剪贴板历史更新
-window.electronAPI.onUpdateClipboardHistory((history) => {
-  renderClipboardHistory(history);
-});
-
-// 添加快捷键设置功能
-// 设置快捷键对话框
-async function setupShortcutConfig() {
-  // 先移除已存在的弹窗（如果有）
-  const existingModal = document.querySelector('.shortcut-modal');
-  if (existingModal) {
-    existingModal.remove();
-  }
-
+// 修改快捷键设置对话框
+function setupShortcutConfig() {
   const settingsBtn = document.getElementById('settingsBtn');
-  const shortcutModal = document.createElement('div');
-  shortcutModal.className = 'shortcut-modal';
+  if (!settingsBtn) return;
   
-  const currentShortcut = await window.electronAPI.getShortcut();
-  
-  shortcutModal.innerHTML = `
-    <h3>设置快捷键</h3>
-    <input type="text" class="shortcut-input" value="${currentShortcut}" placeholder="请按下新的快捷键组合" readonly>
-    <div class="shortcut-buttons">
-      <button class="save-btn">保存</button>
-      <button class="cancel-btn">取消</button>
-    </div>
-  `;
-  
-  document.body.appendChild(shortcutModal);
-  
-  const shortcutInput = shortcutModal.querySelector('.shortcut-input');
-  const saveBtn = shortcutModal.querySelector('.save-btn');
-  const cancelBtn = shortcutModal.querySelector('.cancel-btn');
-  
-  // 添加键盘事件监听
-  shortcutInput.addEventListener('keydown', (e) => {
-    e.preventDefault();
-    const keys = [];
+  settingsBtn.onclick = async () => {
+    const existingModal = document.querySelector('.shortcut-modal');
+    if (existingModal) {
+      existingModal.remove();
+    }
+
+    const shortcutModal = document.createElement('div');
+    shortcutModal.className = 'shortcut-modal';
+    shortcutModal.style.display = 'block'; // 确保对话框显示
     
-    // 修改按键检测逻辑
-    if (e.metaKey) keys.push('Command');
-    if (e.ctrlKey) keys.push('Control');
-    if (e.altKey) keys.push('Option');
-    if (e.shiftKey) keys.push('Shift');
+    const currentShortcut = await window.electronAPI.getShortcut();
     
-    // 获取主键（非修饰键）
-    let mainKey = e.code;  // 使用 code 而不是 key
+    shortcutModal.innerHTML = `
+      <h3>设置快捷键</h3>
+      <input type="text" class="shortcut-input" value="${currentShortcut}" placeholder="请按下新的快捷键组合" readonly>
+      <div class="shortcut-buttons">
+        <button class="save-btn">保存</button>
+        <button class="cancel-btn">取消</button>
+      </div>
+    `;
     
-    // 特殊按键映射
-    const keyMap = {
-      'Meta': '',
-      'Control': '',
-      'Alt': '',
-      'Shift': '',
-      'ArrowUp': '↑',
-      'ArrowDown': '↓',
-      'ArrowLeft': '←',
-      'ArrowRight': '→',
-      'KeyA': 'A',
-      'KeyB': 'B',
-      'KeyC': 'C',
-      // ... 其他字母键的映射
-      'KeyZ': 'Z'
+    document.body.appendChild(shortcutModal);
+    
+    const shortcutInput = shortcutModal.querySelector('.shortcut-input');
+    const saveBtn = shortcutModal.querySelector('.save-btn');
+    const cancelBtn = shortcutModal.querySelector('.cancel-btn');
+    
+    shortcutInput.onkeydown = (e) => {
+      e.preventDefault();
+      const keys = [];
+      if (e.metaKey) keys.push('Command');
+      if (e.ctrlKey) keys.push('Control');
+      if (e.altKey) keys.push('Option');
+      if (e.shiftKey) keys.push('Shift');
+      
+      let mainKey = e.code;
+      if (mainKey.startsWith('Key')) {
+        mainKey = mainKey.slice(3);
+      }
+      
+      if (mainKey && !['Meta', 'Control', 'Alt', 'Shift'].includes(mainKey)) {
+        keys.push(mainKey);
+      }
+      
+      if (keys.length > 0) {
+        shortcutInput.value = keys.join('+');
+      }
     };
-  
-    // 处理主键
-    if (mainKey.startsWith('Key')) {
-      mainKey = mainKey.slice(3); // 提取字母部分
-    } else if (keyMap.hasOwnProperty(mainKey)) {
-      mainKey = keyMap[mainKey];
-    }
-  
-    // 只有当主键不是修饰键时才添加
-    if (mainKey && !['Meta', 'Control', 'Alt', 'Shift'].includes(mainKey)) {
-      keys.push(mainKey);
-    }
-  
-    // 更新输入框的值
-    if (keys.length > 0) {
-      shortcutInput.value = keys.join('+');
-    }
-  });
-  
-  // 移除之前的事件监听器
-  const newSettingsBtn = settingsBtn.cloneNode(true);
-  settingsBtn.parentNode.replaceChild(newSettingsBtn, settingsBtn);
-  
-  // 重新添加事件监听器
-  newSettingsBtn.addEventListener('click', () => {
-    shortcutModal.style.display = 'block';
-  });
-  
-  cancelBtn.addEventListener('click', () => {
-    shortcutModal.style.display = 'none';
-  });
-  
-  saveBtn.addEventListener('click', async () => {
-    const success = await window.electronAPI.setShortcut(shortcutInput.value);
-    if (success) {
-      const tip = document.createElement('div');
-      tip.className = 'success-tip';
-      tip.textContent = `快捷键已修改为: ${shortcutInput.value}`;
-      document.body.appendChild(tip);
-      
+    
+    saveBtn.onclick = async () => {
+      const success = await window.electronAPI.setShortcut(shortcutInput.value);
+      if (success) {
+        const tip = document.createElement('div');
+        tip.className = 'success-tip';
+        tip.textContent = `快捷键已修改为: ${shortcutInput.value}`;
+        document.body.appendChild(tip);
+        shortcutModal.style.display = 'none';
+        setTimeout(() => tip.remove(), 3000);
+      }
+    };
+    
+    cancelBtn.onclick = () => {
       shortcutModal.style.display = 'none';
-      
-      setTimeout(() => {
-        tip.remove();
-      }, 3000);
-    }
-  });
+    };
+  };
 }
 
 // 添加关闭按钮功能
 function setupCloseButton() {
   const closeBtn = document.getElementById('closeBtn');
-  closeBtn.addEventListener('click', () => {
+  if (!closeBtn) return;
+  
+  closeBtn.onclick = () => {
     window.electronAPI.hideWindow();
-  });
+  };
 }
 
-// 添加清空按钮事件处理
-async function setupClearButton() {
-  const clearBtn = document.getElementById('clearBtn');
-  if (clearBtn) {
-    clearBtn.addEventListener('click', async () => {
-      const success = await window.electronAPI.clearHistory();
-      if (!success) {
-        console.error('清空历史记录失败');
-      }
-    });
+// 统一的初始化入口
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    setupSearch();
+    setupCloseButton();
+    setupClearButton();
+    setupShortcutConfig();
+    
+    const initialHistory = await window.electronAPI.getHistory();
+    if (initialHistory && initialHistory.length > 0) {
+      clipboardHistory = initialHistory;
+      renderClipboardHistory(initialHistory);
+    }
+  } catch (error) {
+    console.error('初始化失败:', error);
   }
-}
-
-// 在初始化时调用
-setupClearButton();
-
-// 初始化时调用
-setupShortcutConfig();
+});

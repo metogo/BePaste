@@ -146,9 +146,9 @@ app.whenReady().then(() => {
   // 显示初始窗口
   showWindow();
   
-  // 监听剪贴板变化
+  // 修改剪贴板变化监听，移除 isVisible 检查
   clipboardManager.onChange((history) => {
-    if (isVisible && mainWindow) {
+    if (mainWindow) {
       mainWindow.webContents.send('update-clipboard-history', history);
     }
   });
@@ -183,21 +183,9 @@ ipcMain.handle('copy-to-clipboard', async (event, data) => {
 });
 
 // 添加 IPC 处理
-ipcMain.handle('clear-history', () => {
-  const { dialog } = require('electron');
-  const result = dialog.showMessageBoxSync(mainWindow, {
-    type: 'warning',
-    title: '确认清空',
-    message: '确定要清空所有历史记录吗？',
-    buttons: ['确定', '取消'],
-    defaultId: 1,
-    cancelId: 1
-  });
-  
-  if (result === 0) {
-    return clipboardManager.clearHistory();
-  }
-  return false;
+// 修改 clear-history 处理器
+ipcMain.handle('clear-history', async () => {
+  return clipboardManager.clearHistory();
 });
 
 ipcMain.handle('get-history', () => {
@@ -210,4 +198,20 @@ ipcMain.handle('get-shortcut', () => {
 
 ipcMain.handle('set-shortcut', (event, shortcut) => {
   return shortcutManager.register(shortcut);
+});
+
+// 添加确认对话框的 IPC 处理
+// 保留确认对话框的 IPC 处理
+ipcMain.handle('show-confirm-dialog', async (event, message) => {
+  const { dialog } = require('electron');
+  const result = await dialog.showMessageBox(mainWindow, {
+    type: 'warning',
+    title: '确认',
+    message: message,
+    buttons: ['确定', '取消'],
+    defaultId: 1,
+    cancelId: 1
+  });
+  
+  return result.response === 0;
 });

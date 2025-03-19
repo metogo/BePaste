@@ -28,4 +28,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   setShortcut: (shortcut) => ipcRenderer.invoke('set-shortcut', shortcut),
   clearHistory: () => ipcRenderer.invoke('clear-history'),
   getHistory: () => ipcRenderer.invoke('get-history'),
+  
+  // 添加确认对话框方法
+  showConfirmDialog: (message) => ipcRenderer.invoke('show-confirm-dialog', message),
 });

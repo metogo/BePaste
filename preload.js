@@ -31,4 +31,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   
   // 添加确认对话框方法
   showConfirmDialog: (message) => ipcRenderer.invoke('show-confirm-dialog', message),
+  onWindowShow: (callback) => ipcRenderer.on('window-show', callback),
+  setMouseInWindow: (value) => ipcRenderer.send('set-mouse-in-window', value),
 });

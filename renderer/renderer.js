@@ -319,6 +319,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupClearButton();
     setupShortcutConfig();
     
+    // 移除这部分代码
+    // window.addEventListener('blur', () => {
+    //   window.electronAPI.hideWindow();
+    // });
+    
     const initialHistory = await window.electronAPI.getHistory();
     if (initialHistory && initialHistory.length > 0) {
       clipboardHistory = initialHistory;

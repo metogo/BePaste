@@ -16,6 +16,11 @@ let mainWindow = null;
 let isVisible = false;
 
 // 创建窗口函数
+// 在文件顶部添加全局变量
+let isShortcutTriggered = false;
+let lastShowTime = 0;
+let mouseInWindow = false;
+
 function createWindow() {
   const display = screen.getPrimaryDisplay();
   const windowHeight = 330;
@@ -68,6 +73,40 @@ function createWindow() {
       hideWindow();
     }
   });
+
+  // 添加窗口事件监听
+  mainWindow.on('show', () => {
+    lastShowTime = Date.now();
+    isShortcutTriggered = true;
+    // 显示窗口时重置鼠标状态
+    mouseInWindow = false;
+  });
+
+  // 监听鼠标进入和离开事件
+  mainWindow.webContents.on('dom-ready', () => {
+    mainWindow.webContents.executeJavaScript(`
+      document.addEventListener('mouseenter', () => {
+        window.electronAPI.setMouseInWindow(true);
+      });
+      document.addEventListener('mouseleave', () => {
+        window.electronAPI.setMouseInWindow(false);
+      });
+    `);
+  });
+  
+  mainWindow.on('blur', () => {
+    // 检查是否有模态对话框打开
+    const modalWindows = BrowserWindow.getAllWindows().filter(win => 
+      win.isModal() && win.isVisible()
+    );
+    
+    // 如果鼠标在窗口内或有模态窗口，不隐藏
+    if (modalWindows.length > 0 || mouseInWindow) {
+      return;
+    }
+    
+    hideWindow();
+  });
 }
 
 // 更新窗口位置
@@ -105,25 +144,29 @@ function hideWindow() {
 }
 
 // 显示窗口
+// 在 showWindow 函数中添加
 function showWindow() {
   if (!mainWindow) return;
   
-  // 先更新位置和属性，确保窗口状态正确
   updateWindowPosition();
-  
-  // 显示窗口
   mainWindow.show();
+  mainWindow.focus(); // 确保窗口获得焦点
   isVisible = true;
+  mouseInWindow = true; // 初始状态设置为 true
+  mainWindow.webContents.send('window-show');
 }
 
 // 切换窗口显示状态
+// 修改 toggleWindow 函数
 function toggleWindow() {
   if (!mainWindow) return;
   
   if (isVisible) {
     hideWindow();
   } else {
+    isShortcutTriggered = true; // 在这里也设置标记
     showWindow();
+    mainWindow.focus();
   }
 }
 
@@ -137,11 +180,15 @@ app.whenReady().then(() => {
   // 启动剪贴板监视
   clipboardManager.startWatching();
   
-  // 初始化时先隐藏窗口
-  if (mainWindow) {
-    mainWindow.hide();
-    isVisible = false;
-  }
+  // 显示初始窗口并设置初始状态
+  isShortcutTriggered = true; // 设置初始状态
+  showWindow();
+  
+  // 移除这两行
+  // if (mainWindow) {
+  //   mainWindow.hide();
+  //   isVisible = false;
+  // }
   
   // 显示初始窗口
   showWindow();
@@ -204,14 +251,24 @@ ipcMain.handle('set-shortcut', (event, shortcut) => {
 // 保留确认对话框的 IPC 处理
 ipcMain.handle('show-confirm-dialog', async (event, message) => {
   const { dialog } = require('electron');
+  
+  // 在显示对话框之前，确保主窗口是焦点窗口
+  mainWindow.focus();
+  
   const result = await dialog.showMessageBox(mainWindow, {
     type: 'warning',
     title: '确认',
     message: message,
     buttons: ['确定', '取消'],
     defaultId: 1,
-    cancelId: 1
+    cancelId: 1,
+    modal: true  // 确保是模态对话框
   });
   
   return result.response === 0;
+});
+
+// 添加新的 IPC 处理
+ipcMain.on('set-mouse-in-window', (event, value) => {
+  mouseInWindow = value;
 });

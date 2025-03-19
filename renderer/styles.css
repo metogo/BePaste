@@ -30,7 +30,7 @@ body {
   gap: 15px;
   height: 300px; /* 调整为固定高度 */
   -webkit-app-region: no-drag;
-  /* padding: 10px 0; */
+  padding: 10px 0;
   white-space: nowrap;
 }
 
@@ -179,18 +179,101 @@ body {
   }
 }
 
-.search-container {
-  position: sticky;
-  top: 0;
-  left: 0;
-  right: 0;
-  /* padding: 15px 0; */
+/* 删除旧的 search-container 样式，替换为新的 header 相关样式 */
+
+.header {
   display: flex;
   justify-content: center;
-  z-index: 100;
+  align-items: center;
+  padding: 10px 20px;
   background: rgba(0, 0, 0, 0.2);
   backdrop-filter: blur(20px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  gap: 20px;
+  position: fixed; /* 添加固定定位 */
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000; /* 确保在最上层 */
+}
+
+.cards-container {
+  display: flex;
+  gap: 15px;
+  height: 300px;
+  -webkit-app-region: no-drag;
+  padding: 60px 0 10px 0; /* 增加顶部内边距，为固定的 header 留出空间 */
+  white-space: nowrap;
+}
+
+.search-container {
+  flex: 0 1 500px; /* 修改 flex 属性，不再自动扩展 */
+  position: relative;
+}
+
+.buttons {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex: 0 0 auto; /* 按钮容器不伸缩 */
+}
+
+#searchInput {
+  width: 100%;
+  padding: 10px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 25px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #fff;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.icon-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px; /* 增大图标尺寸 */
+  padding: 8px;
+  opacity: 0.7;
+  transition: all 0.3s ease;
+  color: #fff;
+  border-radius: 50%;
+  width: 36px; /* 增大按钮尺寸 */
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-button:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+#clearBtn {
+  color: #ff4d4f;
+  font-size: 16px; /* 调整垃圾桶图标大小 */
+}
+
+#clearBtn:hover {
+  background-color: rgba(255, 77, 79, 0.1);
+}
+
+/* 适配浅色主题 */
+@media (prefers-color-scheme: light) {
+  .header {
+    background: rgba(255, 255, 255, 0.8);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  }
+
+  .icon-button {
+    color: #333;
+  }
+
+  .icon-button:hover {
+    background: rgba(0, 0, 0, 0.1);
+  }
 }
 
 .search-wrapper {
@@ -430,4 +513,12 @@ body {
 
 .cancel-btn:hover {
   background: #e0e0e0;
+}
+
+#clearBtn {
+  color: #ff4d4f;
+}
+
+#clearBtn:hover {
+  background-color: rgba(255, 77, 79, 0.1);
 }

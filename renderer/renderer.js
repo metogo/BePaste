@@ -28,22 +28,43 @@ function createCardElement(item) {
   card.className = 'card';
   card.dataset.id = item.id;
   
-  // 截断过长的文本
-  let displayText = item.text;
-  if (displayText.length > 1000) {
-    displayText = displayText.substring(0, 1000) + '...';
+  if (item.type === 'image') {
+    // 处理图片类型
+    card.innerHTML = `
+      <div class="card-content">
+        <img src="${item.content}" alt="剪贴板图片" style="max-width: 100%; max-height: 200px; object-fit: contain;">
+      </div>
+      <div class="card-info">
+        <div class="card-timestamp">${formatTimestamp(item.timestamp)}</div>
+        <div class="card-type">图片</div>
+      </div>
+    `;
+  } else {
+    // 处理文本类型
+    let displayText = typeof item.content === 'string' ? item.content : JSON.stringify(item.content);
+    if (displayText && displayText.length > 1000) {
+      displayText = displayText.substring(0, 1000) + '...';
+    }
+    
+    card.innerHTML = `
+      <div class="card-content">${displayText}</div>
+      <div class="card-info">
+        <div class="card-timestamp">${formatTimestamp(item.timestamp)}</div>
+        <div class="card-char-count">${displayText ? displayText.length : 0} 字符</div>
+      </div>
+    `;
   }
   
-  card.innerHTML = `
-    <div class="card-content">${displayText}</div>
-    <div class="card-info">
-      <div class="card-timestamp">${formatTimestamp(item.timestamp)}</div>
-      <div class="card-char-count">${item.text.length} 字符</div>
-    </div>
-  `;
-  
-  card.addEventListener('click', () => {
-    window.electronAPI.copyToClipboard(item.text);
+  // 修改点击事件处理
+  card.addEventListener('click', async () => {
+    try {
+      const success = await window.electronAPI.copyToClipboard(item);
+      if (!success) {
+        console.error('复制失败');
+      }
+    } catch (error) {
+      console.error('复制过程出错:', error);
+    }
   });
   
   return card;
@@ -57,9 +78,11 @@ function setupSearch() {
   
   searchInput.addEventListener('input', (e) => {
     const searchText = e.target.value.toLowerCase();
-    const filteredHistory = clipboardHistory.filter(item => 
-      item.text.toLowerCase().includes(searchText)
-    );
+    const filteredHistory = clipboardHistory.filter(item => {
+      if (item.type === 'image') return true; // 图片始终显示
+      const content = item.content || '';
+      return content.toLowerCase().includes(searchText);
+    });
     renderClipboardHistory(filteredHistory);
   });
 }
@@ -188,13 +211,46 @@ function renderClipboardHistory(history) {
   virtualScroller.setItems(history);
 }
 
-// 监听键盘事件
+// 监听键盘事件（合并所有键盘相关的处理）
 document.addEventListener('keydown', (event) => {
-  // ESC键隐藏窗口
   if (event.key === 'Escape') {
     window.electronAPI.hideWindow();
+  } else if (event.key === 'ArrowLeft') {
+    cardsContainer.scrollBy({
+      left: -300,
+      behavior: 'smooth'
+    });
+  } else if (event.key === 'ArrowRight') {
+    cardsContainer.scrollBy({
+      left: 300,
+      behavior: 'smooth'
+    });
   }
 });
+
+// 单一的历史更新处理
+window.electronAPI.onUpdateClipboardHistory((history) => {
+  clipboardHistory = history; // 保存完整历史
+  renderClipboardHistory(history);
+});
+
+// 初始化功能
+async function init() {
+  setupSearch();
+  setupShortcutConfig();
+  setupCloseButton();
+  setupClearButton();
+  
+  // 获取并渲染初始历史记录
+  const initialHistory = await window.electronAPI.getHistory();
+  if (initialHistory && initialHistory.length > 0) {
+    clipboardHistory = initialHistory;
+    renderClipboardHistory(initialHistory);
+  }
+}
+
+// 启动应用
+init();
 
 // 监听滚动事件，实现平滑滚动
 // 添加滚动处理
@@ -243,7 +299,7 @@ document.addEventListener('keydown', (event) => {
   }
 });
 
-// 监听从主进程发来的剪贴板历史更新
+// 监nfrom主进程发来的剪贴板历史更新
 window.electronAPI.onUpdateClipboardHistory((history) => {
   renderClipboardHistory(history);
 });
@@ -323,8 +379,21 @@ function setupCloseButton() {
   });
 }
 
+// 添加清空按钮事件处理
+async function setupClearButton() {
+  const clearBtn = document.getElementById('clearBtn');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', async () => {
+      const success = await window.electronAPI.clearHistory();
+      if (!success) {
+        console.error('清空历史记录失败');
+      }
+    });
+  }
+}
+
 // 在初始化时调用
-setupCloseButton();
+setupClearButton();
 
 // 初始化时调用
 setupShortcutConfig();

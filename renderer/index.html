@@ -5,15 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BePaste</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
   <div class="container">
-    <div class="search-container">
-      <div class="search-wrapper">
-        <img src="search-icon.png" class="search-icon" alt="BePaste">
-        <input type="text" id="searchInput" placeholder="搜索剪贴板内容..." />
-        <button id="settingsBtn" class="settings-btn" title="设置快捷键">⌨️</button>
-        <button id="closeBtn" class="close-btn" title="关闭窗口">✕</button>
+    <div class="header">
+      <div class="search-container">
+        <input type="text" id="searchInput" placeholder="搜索剪贴板内容...">
+      </div>
+      <div class="buttons">
+        <button id="clearBtn" class="icon-button" title="清空历史">
+          <i class="fas fa-trash"></i>
+        </button>
+        <button id="settingsBtn" class="icon-button" title="设置快捷键">
+          <i class="fas fa-cog"></i>
+        </button>
+        <button id="closeBtn" class="icon-button" title="关闭">
+          <i class="fas fa-times"></i>
+        </button>
       </div>
     </div>
     <div id="cardsContainer" class="cards-container">

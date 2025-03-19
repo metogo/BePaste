@@ -1,21 +1,30 @@
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, clipboard, nativeImage } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  // 接收剪贴板历史更新
   onUpdateClipboardHistory: (callback) => {
     ipcRenderer.on('update-clipboard-history', (event, history) => callback(history));
   },
   
-  // 隐藏窗口
   hideWindow: () => {
     ipcRenderer.send('hide-window');
   },
   
-  // 复制内容到剪贴板
-  copyToClipboard: (text) => {
-    ipcRenderer.send('copy-to-clipboard', text);
+  copyToClipboard: (data) => {
+    if (data.type === 'image') {
+      // 确保图片数据是完整的 base64 字符串
+      const imageData = data.content.startsWith('data:image') 
+        ? data.content 
+        : `data:image/png;base64,${data.content}`;
+      return ipcRenderer.invoke('copy-to-clipboard', {
+        type: 'image',
+        content: imageData
+      });
+    }
+    return ipcRenderer.invoke('copy-to-clipboard', data);
   },
   
   getCurrentShortcut: () => ipcRenderer.invoke('get-shortcut'),
-  setShortcut: (shortcut) => ipcRenderer.invoke('set-shortcut', shortcut)
+  setShortcut: (shortcut) => ipcRenderer.invoke('set-shortcut', shortcut),
+  clearHistory: () => ipcRenderer.invoke('clear-history'),
+  getHistory: () => ipcRenderer.invoke('get-history'),
 });

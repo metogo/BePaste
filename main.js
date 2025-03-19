@@ -114,8 +114,6 @@ function showWindow() {
   // 显示窗口
   mainWindow.show();
   isVisible = true;
-  
-  mainWindow.webContents.send('update-clipboard-history', clipboardManager.getHistory());
 }
 
 // 切换窗口显示状态
@@ -129,26 +127,6 @@ function toggleWindow() {
   }
 }
 
-// 显示窗口
-function showWindow() {
-  if (!mainWindow) return;
-  
-  updateWindowPosition();
-  mainWindow.show();
-  isVisible = true;
-  
-  // 发送最新的剪贴板历史到渲染进程
-  mainWindow.webContents.send('update-clipboard-history', clipboardManager.getHistory());
-}
-
-// 隐藏窗口
-function hideWindow() {
-  if (!mainWindow) return;
-  
-  mainWindow.hide();
-  isVisible = false;
-}
-
 // 当Electron完成初始化并准备创建浏览器窗口时调用此方法
 app.whenReady().then(() => {
   createWindow();
@@ -158,6 +136,12 @@ app.whenReady().then(() => {
   
   // 启动剪贴板监视
   clipboardManager.startWatching();
+  
+  // 初始化时先隐藏窗口
+  if (mainWindow) {
+    mainWindow.hide();
+    isVisible = false;
+  }
   
   // 显示初始窗口
   showWindow();
@@ -176,64 +160,50 @@ app.whenReady().then(() => {
   trayManager.create(toggleWindow);
   
   app.on('activate', () => {
-    // 在macOS上，当点击dock图标并且没有其他窗口打开时，通常在应用程序中重新创建一个窗口
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
-
-// 当所有窗口关闭时退出应用
-app.on('window-all-closed', () => {
-  // 在macOS上，除非用户用Cmd + Q确定地退出，否则应用和菜单栏会保持活动
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
-
-// 应用退出前清理
-app.on('will-quit', () => {
-  // 注销所有快捷键
-  shortcutManager.unregisterAll();
-  
-  // 停止剪贴板监视
-  clipboardManager.stopWatching();
-  
-  // 销毁托盘图标
-  trayManager.destroy();
-});
-
-// 添加内存监控
-function monitorMemoryUsage() {
-  const memoryInfo = process.getProcessMemoryInfo();
-  const memoryUsageMB = Math.round(memoryInfo.private / 1024 / 1024);
-  
-  log.info(`内存使用: ${memoryUsageMB}MB`);
-  
-  // 如果内存使用超过阈值，进行垃圾回收
-  if (memoryUsageMB > 200) { // 200MB 阈值
-    log.info('内存使用过高，尝试进行垃圾回收');
-    if (global.gc) {
-      global.gc();
-    }
-  }
-}
-
-// 定期监控内存使用
-setInterval(monitorMemoryUsage, 60000); // 每分钟检查一次
 
 // IPC通信处理
 ipcMain.on('hide-window', () => {
   hideWindow();
 });
 
-ipcMain.on('copy-to-clipboard', (event, text) => {
-  const success = clipboardManager.copyToClipboard(text);
-  if (success) {
-    // 复制成功后隐藏窗口
-    hideWindow();
+ipcMain.handle('copy-to-clipboard', async (event, data) => {
+  try {
+    const success = await clipboardManager.copyToClipboard(data);
+    if (success) {
+      hideWindow();
+    }
+    return success;
+  } catch (error) {
+    log.error('复制到剪贴板失败:', error);
+    return false;
   }
 });
 
 // 添加 IPC 处理
+ipcMain.handle('clear-history', () => {
+  const { dialog } = require('electron');
+  const result = dialog.showMessageBoxSync(mainWindow, {
+    type: 'warning',
+    title: '确认清空',
+    message: '确定要清空所有历史记录吗？',
+    buttons: ['确定', '取消'],
+    defaultId: 1,
+    cancelId: 1
+  });
+  
+  if (result === 0) {
+    return clipboardManager.clearHistory();
+  }
+  return false;
+});
+
+ipcMain.handle('get-history', () => {
+  return clipboardManager.getHistory();
+});
+
 ipcMain.handle('get-shortcut', () => {
   return shortcutManager.getCurrentShortcut();
 });

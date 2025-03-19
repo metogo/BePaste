@@ -23,7 +23,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     return ipcRenderer.invoke('copy-to-clipboard', data);
   },
   
-  getCurrentShortcut: () => ipcRenderer.invoke('get-shortcut'),
+  // 添加快捷键相关的 API
+  getShortcut: () => ipcRenderer.invoke('get-shortcut'),
   setShortcut: (shortcut) => ipcRenderer.invoke('set-shortcut', shortcut),
   clearHistory: () => ipcRenderer.invoke('clear-history'),
   getHistory: () => ipcRenderer.invoke('get-history'),

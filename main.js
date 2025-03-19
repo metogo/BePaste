@@ -132,7 +132,7 @@ app.whenReady().then(() => {
   createWindow();
   
   // 注册全局快捷键
-  shortcutManager.register('CommandOrControl+Option+C', toggleWindow);
+  shortcutManager.register('Command+Option+C', toggleWindow);
   
   // 启动剪贴板监视
   clipboardManager.startWatching();

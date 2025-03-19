@@ -235,9 +235,14 @@ window.electronAPI.onUpdateClipboardHistory((history) => {
 });
 
 // 初始化功能
+document.addEventListener('DOMContentLoaded', () => {
+  init();
+});
+
 async function init() {
+  const cardsContainer = document.getElementById('cardsContainer');
   setupSearch();
-  setupShortcutConfig();
+  await setupShortcutConfig();  // 确保等待设置完成
   setupCloseButton();
   setupClearButton();
   
@@ -305,69 +310,111 @@ window.electronAPI.onUpdateClipboardHistory((history) => {
 });
 
 // 添加快捷键设置功能
+// 设置快捷键对话框
 async function setupShortcutConfig() {
+  // 先移除已存在的弹窗（如果有）
+  const existingModal = document.querySelector('.shortcut-modal');
+  if (existingModal) {
+    existingModal.remove();
+  }
+
   const settingsBtn = document.getElementById('settingsBtn');
+  const shortcutModal = document.createElement('div');
+  shortcutModal.className = 'shortcut-modal';
   
-  settingsBtn.addEventListener('click', async () => {
-    const currentShortcut = await window.electronAPI.getCurrentShortcut();
+  const currentShortcut = await window.electronAPI.getShortcut();
+  
+  shortcutModal.innerHTML = `
+    <h3>设置快捷键</h3>
+    <input type="text" class="shortcut-input" value="${currentShortcut}" placeholder="请按下新的快捷键组合" readonly>
+    <div class="shortcut-buttons">
+      <button class="save-btn">保存</button>
+      <button class="cancel-btn">取消</button>
+    </div>
+  `;
+  
+  document.body.appendChild(shortcutModal);
+  
+  const shortcutInput = shortcutModal.querySelector('.shortcut-input');
+  const saveBtn = shortcutModal.querySelector('.save-btn');
+  const cancelBtn = shortcutModal.querySelector('.cancel-btn');
+  
+  // 添加键盘事件监听
+  shortcutInput.addEventListener('keydown', (e) => {
+    e.preventDefault();
+    const keys = [];
     
-    const modal = document.createElement('div');
-    modal.className = 'shortcut-modal';
-    modal.innerHTML = `
-      <h3>设置快捷键</h3>
-      <input type="text" class="shortcut-input" value="${currentShortcut}" placeholder="点击输入新快捷键" readonly>
-      <p>按下新的快捷键组合，按ESC取消</p>
-      <div class="shortcut-buttons">
-        <button class="save-btn" disabled>保存</button>
-        <button class="cancel-btn">取消</button>
-      </div>
-    `;
+    // 修改按键检测逻辑
+    if (e.metaKey) keys.push('Command');
+    if (e.ctrlKey) keys.push('Control');
+    if (e.altKey) keys.push('Option');
+    if (e.shiftKey) keys.push('Shift');
     
-    const input = modal.querySelector('.shortcut-input');
-    const saveBtn = modal.querySelector('.save-btn');
-    const cancelBtn = modal.querySelector('.cancel-btn');
-    let newShortcut = '';
+    // 获取主键（非修饰键）
+    let mainKey = e.code;  // 使用 code 而不是 key
     
-    function handleKeyDown(e) {
-      e.preventDefault();
-      
-      if (e.key === 'Escape') {
-        modal.remove();
-        return;
-      }
-      
-      const keys = [];
-      if (e.metaKey) keys.push('Command');
-      if (e.ctrlKey) keys.push('Control');
-      if (e.altKey) keys.push('Option');
-      if (e.shiftKey) keys.push('Shift');
-      
-      const key = e.key.toUpperCase();
-      if (!['META', 'CONTROL', 'ALT', 'SHIFT'].includes(key)) {
-        keys.push(key);
-      }
-      
-      if (keys.length > 0) {
-        newShortcut = keys.join('+');
-        input.value = newShortcut;
-        saveBtn.disabled = false;
-      }
+    // 特殊按键映射
+    const keyMap = {
+      'Meta': '',
+      'Control': '',
+      'Alt': '',
+      'Shift': '',
+      'ArrowUp': '↑',
+      'ArrowDown': '↓',
+      'ArrowLeft': '←',
+      'ArrowRight': '→',
+      'KeyA': 'A',
+      'KeyB': 'B',
+      'KeyC': 'C',
+      // ... 其他字母键的映射
+      'KeyZ': 'Z'
+    };
+  
+    // 处理主键
+    if (mainKey.startsWith('Key')) {
+      mainKey = mainKey.slice(3); // 提取字母部分
+    } else if (keyMap.hasOwnProperty(mainKey)) {
+      mainKey = keyMap[mainKey];
     }
-    
-    saveBtn.addEventListener('click', async () => {
-      if (newShortcut) {
-        await window.electronAPI.setShortcut(newShortcut);
-        modal.remove();
-      }
-    });
-    
-    cancelBtn.addEventListener('click', () => {
-      modal.remove();
-    });
-    
-    input.addEventListener('keydown', handleKeyDown);
-    document.body.appendChild(modal);
-    input.focus();
+  
+    // 只有当主键不是修饰键时才添加
+    if (mainKey && !['Meta', 'Control', 'Alt', 'Shift'].includes(mainKey)) {
+      keys.push(mainKey);
+    }
+  
+    // 更新输入框的值
+    if (keys.length > 0) {
+      shortcutInput.value = keys.join('+');
+    }
+  });
+  
+  // 移除之前的事件监听器
+  const newSettingsBtn = settingsBtn.cloneNode(true);
+  settingsBtn.parentNode.replaceChild(newSettingsBtn, settingsBtn);
+  
+  // 重新添加事件监听器
+  newSettingsBtn.addEventListener('click', () => {
+    shortcutModal.style.display = 'block';
+  });
+  
+  cancelBtn.addEventListener('click', () => {
+    shortcutModal.style.display = 'none';
+  });
+  
+  saveBtn.addEventListener('click', async () => {
+    const success = await window.electronAPI.setShortcut(shortcutInput.value);
+    if (success) {
+      const tip = document.createElement('div');
+      tip.className = 'success-tip';
+      tip.textContent = `快捷键已修改为: ${shortcutInput.value}`;
+      document.body.appendChild(tip);
+      
+      shortcutModal.style.display = 'none';
+      
+      setTimeout(() => {
+        tip.remove();
+      }, 3000);
+    }
   });
 }
 

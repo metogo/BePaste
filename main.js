@@ -7,6 +7,7 @@ const shortcutManager = require('./src/shortcut');
 const autoLaunchManager = require('./src/autoLaunch');
 const trayManager = require('./src/tray');
 const { nativeTheme } = require('electron');
+const errorHandler = require('./src/errorHandler');
 
 // 配置日志
 log.transports.file.level = 'info';
@@ -233,7 +234,7 @@ ipcMain.handle('copy-to-clipboard', async (event, data) => {
     }
     return success;
   } catch (error) {
-    log.error('复制到剪贴板失败:', error);
+    errorHandler.handleError(error, { type: 'clipboard-operation' });
     return false;
   }
 });
@@ -282,3 +283,8 @@ ipcMain.on('set-mouse-in-window', (event, value) => {
 ipcMain.on('theme-changed', (event, isDark) => {
   nativeTheme.themeSource = isDark ? 'dark' : 'light';
 });
+
+// 添加一个测试错误（测试完成后可以删除）
+// setTimeout(() => {
+//   errorHandler.handleError(new Error('测试错误报告系统'));
+// }, 5000);

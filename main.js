@@ -102,11 +102,10 @@ function createWindow() {
   // 修改窗口加载完成事件
   mainWindow.webContents.on('did-finish-load', () => {
     showWindow();
-    isShortcutTriggered = true;
-    mouseInWindow = true;
-    // 移除这里的 hideWindow 调用
+    // 设置一个标志，表示这是首次启动
+    mainWindow.isFirstLoad = true;
   });
-
+  
   // 修改 blur 事件处理
   mainWindow.on('blur', () => {
     // 检查是否有模态对话框打开
@@ -114,8 +113,9 @@ function createWindow() {
       win.isModal() && win.isVisible()
     );
     
-    // 只在有模态窗口或鼠标在窗口内时不隐藏
-    if (modalWindows.length > 0 || mouseInWindow) {
+    // 如果是首次加载或有模态窗口或鼠标在窗口内，则不隐藏
+    if (mainWindow.isFirstLoad || modalWindows.length > 0 || mouseInWindow) {
+      mainWindow.isFirstLoad = false; // 清除首次加载标志
       return;
     }
     

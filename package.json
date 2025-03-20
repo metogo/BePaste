@@ -20,28 +20,14 @@
     "electron": "^25.1.0"
   },
   "build": {
-    "appId": "com.fanhua.bepaste",
-    "productName": "BePaste",
+    "appId": "com.yourname.bepaste",
     "mac": {
-      "category": "public.app-category.utilities",
-      "target": {
-        "target": "dmg",
-        "arch": [
-          "x64",
-          "arm64"
-        ]
-      },
-      "icon": "build/icon.icns",
-      "darkModeSupport": true,
+      "category": "public.app-category.productivity",
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
       "entitlements": "build/entitlements.mac.plist",
-      "entitlementsInherit": "build/entitlements.mac.plist"
-    },
-    "files": [
-      "**/*"
-    ],
-    "compression": "maximum",
-    "asar": true
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "provisioningProfile": "embedded.provisionprofile"
+    }
   }
 }

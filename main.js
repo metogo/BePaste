@@ -1,4 +1,4 @@
-const { app, BrowserWindow, screen, ipcMain } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, screen } = require('electron');
 const path = require('path');
 const isDev = require('electron-is-dev');
 const log = require('electron-log');
@@ -6,6 +6,7 @@ const clipboardManager = require('./src/clipboard');
 const shortcutManager = require('./src/shortcut');
 const autoLaunchManager = require('./src/autoLaunch');
 const trayManager = require('./src/tray');
+const { nativeTheme } = require('electron');
 
 // 配置日志
 log.transports.file.level = 'info';
@@ -255,29 +256,29 @@ ipcMain.handle('set-shortcut', (event, shortcut) => {
   return shortcutManager.register(shortcut);
 });
 
-// 添加确认对话框的 IPC 处理
-// 保留确认对话框的 IPC 处理
+// 添加确认对话框处理
 ipcMain.handle('show-confirm-dialog', async (event, message) => {
-  const { dialog } = require('electron');
-  
-  // 在显示对话框之前，确保主窗口是焦点窗口
-  mainWindow.focus();
-  
-  const result = await dialog.showMessageBox(mainWindow, {
+  const result = await dialog.showMessageBox(mainWindow, {  // 添加 mainWindow 作为父窗口
     type: 'none',
     title: '确认',
     message: message,
     buttons: ['确定', '取消'],
     defaultId: 1,
     cancelId: 1,
-    modal: true,
     icon: path.join(__dirname, 'assets', 'warning.png')
   });
-  
   return result.response === 0;
+});
+
+ipcMain.on('update-theme', (event, isDark) => {
+  nativeTheme.themeSource = isDark ? 'dark' : 'light';
 });
 
 // 添加新的 IPC 处理
 ipcMain.on('set-mouse-in-window', (event, value) => {
   mouseInWindow = value;
+});
+
+ipcMain.on('theme-changed', (event, isDark) => {
+  nativeTheme.themeSource = isDark ? 'dark' : 'light';
 });

@@ -1,4 +1,4 @@
-const { contextBridge, ipcRenderer, clipboard, nativeImage } = require('electron');
+const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
   onUpdateClipboardHistory: (callback) => {
@@ -36,4 +36,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   onFocusSearch: (callback) => {
     ipcRenderer.on('focus-search', () => callback());
   },
+  
+  updateTheme: (isDark) => ipcRenderer.send('update-theme', isDark),
 });

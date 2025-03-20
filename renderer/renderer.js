@@ -26,7 +26,12 @@ function formatTimestamp(timestamp) {
 function createCardElement(item) {
   const card = document.createElement('div');
   card.className = 'card';
-  card.dataset.id = item.id;
+  // 添加 position 和 transform-origin 样式
+  card.style.cssText = `
+    position: absolute;
+    transform-origin: center center;
+    will-change: transform;
+  `;
   
   if (item.type === 'image') {
     // 处理图片类型
@@ -296,8 +301,12 @@ function setupShortcutConfig() {
         tip.className = 'success-tip';
         tip.textContent = `快捷键已修改为: ${shortcutInput.value}`;
         document.body.appendChild(tip);
-        shortcutModal.style.display = 'none';
-        setTimeout(() => tip.remove(), 3000);
+        shortcutModal.remove(); // 移除模态框
+        
+        // 3秒后移除提示
+        setTimeout(() => {
+          tip.remove();
+        }, 3000);
       }
     };
     
@@ -339,3 +348,42 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error('初始化失败:', error);
   }
 });
+
+const themeToggleBtn = document.getElementById('themeToggleBtn');
+const themeIcon = themeToggleBtn.querySelector('i');
+
+// 检查系统当前主题
+const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+updateThemeIcon(isDarkMode);
+
+// 监听主题切换按钮点击
+themeToggleBtn.addEventListener('click', () => {
+  const hasLightClass = document.body.classList.contains('force-light');
+  const hasDarkClass = document.body.classList.contains('force-dark');
+  
+  document.body.classList.remove('force-dark', 'force-light');
+  
+  let isDark;
+  if (hasLightClass) {
+    document.body.classList.add('force-dark');
+    isDark = true;
+  } else if (hasDarkClass) {
+    document.body.classList.add('force-light');
+    isDark = false;
+  } else {
+    const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    const newTheme = systemTheme === 'dark' ? 'light' : 'dark';
+    document.body.classList.add(`force-${newTheme}`);
+    isDark = newTheme === 'dark';
+  }
+  
+  updateThemeIcon(isDark);
+  // 通知主进程主题变化
+  window.electronAPI.updateTheme(isDark);
+});
+
+// 更新主题图标
+function updateThemeIcon(isDark) {
+  themeIcon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
+  themeToggleBtn.title = isDark ? '切换到浅色主题' : '切换到深色主题';
+}

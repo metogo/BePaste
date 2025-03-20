@@ -39,10 +39,51 @@ body {
   border-radius: 8px;
   padding: 15px;
   cursor: pointer;
-  transition: transform 0.2s, background-color 0.2s;
+  transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+  will-change: transform;
   display: flex;
   flex-direction: column;
-  animation: fadeIn 0.3s ease-out;
+}
+
+.card-content {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 10;
+  -webkit-box-orient: vertical;
+  white-space: normal;
+  word-wrap: break-word;
+  margin-bottom: 10px;
+}
+
+.card-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  background-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* 强制深色主题 */
+body.force-dark .card:hover {
+  transform: translateY(-2px) !important;
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* 强制浅色主题 */
+body.force-light .card:hover {
+  transform: translateY(-2px) !important;
+  background-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
 }
 
 .card-content {
@@ -101,7 +142,7 @@ body {
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   gap: 20px;
   position: fixed;
-  top: 0;
+  top: 8px;
   left: 0;
   right: 0;
   z-index: 1000;
@@ -167,6 +208,15 @@ body {
   transition: all 0.3s ease;
 }
 
+/* 添加主题切换按钮特殊样式 */
+#themeToggleBtn i {
+  transition: transform 0.3s ease;
+}
+
+#themeToggleBtn:hover i {
+  transform: rotate(30deg);
+}
+
 .icon-button:hover {
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
@@ -224,27 +274,57 @@ body {
   transition: all 0.3s;
 }
 
-.save-btn {
-  background: #4CAF50;
-  color: white;
+/* 深色主题下的按钮样式 */
+body.force-dark .save-btn {
+  background: rgba(255, 255, 255, 0.2) !important;
+  color: #fff !important;
 }
 
+body.force-dark .save-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.3) !important;
+}
+
+body.force-dark .cancel-btn {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+body.force-dark .cancel-btn:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+}
+
+/* 浅色主题下的按钮样式 */
+body.force-light .save-btn {
+  background: rgba(0, 0, 0, 0.1) !important;
+  color: rgba(0, 0, 0, 0.9) !important;
+}
+
+body.force-light .save-btn:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.15) !important;
+}
+
+body.force-light .cancel-btn {
+  background: rgba(0, 0, 0, 0.05) !important;
+  color: rgba(0, 0, 0, 0.7) !important;
+}
+
+body.force-light .cancel-btn:hover {
+  background: rgba(0, 0, 0, 0.08) !important;
+}
+
+/* 禁用状态 */
 .save-btn:disabled {
-  background: #ccc;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 .cancel-btn {
-  background: #f5f5f5;
-  color: #333;
-}
-
-.save-btn:hover:not(:disabled) {
-  background: #45a049;
+  background: #f5f5f5; 
+  color: #333;        
 }
 
 .cancel-btn:hover {
-  background: #e0e0e0;
+  background: #e0e0e0; 
 }
 
 .close-btn {
@@ -384,4 +464,117 @@ body {
     background: #f5f5f5;
     color: #333;
   }
+}
+
+
+/* 强制深色主题 */
+body.force-dark {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+  color: #fff !important;
+}
+
+body.force-dark .card {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+body.force-dark .card:hover {
+  transform: translateY(-2px) !important;
+  background-color: rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* 强制浅色主题 */
+body.force-light .card {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+body.force-light .card:hover {
+  transform: translateY(-2px) !important;
+  background-color: rgba(0, 0, 0, 0.08) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* 强制深色主题 */
+body.force-dark .icon-button {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+body.force-dark .icon-button:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+/* 强制浅色主题 */
+body.force-light .icon-button {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+body.force-light .icon-button:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: rgba(0, 0, 0, 0.8);
+}
+
+/* 强制浅色主题 */
+body.force-light .shortcut-modal {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  color: #333 !important;
+}
+
+body.force-light .shortcut-modal h3 {
+  color: #333 !important;
+}
+
+body.force-light .shortcut-input {
+  background: rgba(0, 0, 0, 0.05) !important;
+  border-color: rgba(0, 0, 0, 0.1) !important;
+  color: #333 !important;
+}
+
+body.force-light .shortcut-input:focus {
+  background: rgba(0, 0, 0, 0.08) !important;
+  border-color: rgba(0, 0, 0, 0.2) !important;
+}
+
+/* 强制深色主题 */
+body.force-dark .shortcut-modal {
+  background: rgba(0, 0, 0, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #fff !important;
+}
+
+body.force-dark .shortcut-modal h3 {
+  color: #fff !important;
+}
+
+body.force-dark .shortcut-input {
+  background: rgba(255, 255, 255, 0.1) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: #fff !important;
+}
+
+body.force-dark .shortcut-input:focus {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+.success-tip {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(76, 175, 80, 0.9);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 4px;
+  z-index: 2001;
+  animation: fadeInOut 3s ease-in-out;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translate(-50%, -20px); }
+  10% { opacity: 1; transform: translate(-50%, 0); }
+  90% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, -20px); }
 }

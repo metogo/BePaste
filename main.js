@@ -36,7 +36,7 @@ function createWindow() {
     resizable: false,
     alwaysOnTop: true,
     skipTaskbar: true,
-    show: false,
+    show: false,  // 保持为 false，我们会在加载完成后显示
     type: 'splash',
     hasShadow: false,
     webPreferences: {
@@ -101,10 +101,10 @@ function createWindow() {
   
   // 修改窗口加载完成事件
   mainWindow.webContents.on('did-finish-load', () => {
-    // 首次加载完成后显示窗口
     showWindow();
     isShortcutTriggered = true;
     mouseInWindow = true;
+    // 移除这里的 hideWindow 调用
   });
 
   // 修改 blur 事件处理

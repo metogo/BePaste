@@ -76,10 +76,16 @@ let clipboardHistory = []; // 保存完整的历史记录
 function setupSearch() {
   const searchInput = document.getElementById('searchInput');
   
+  // 添加搜索快捷键响应
+  window.electronAPI.onFocusSearch(() => {
+    searchInput.focus();
+    searchInput.select();
+  });
+
   searchInput.addEventListener('input', (e) => {
     const searchText = e.target.value.toLowerCase();
     const filteredHistory = clipboardHistory.filter(item => {
-      if (item.type === 'image') return true; // 图片始终显示
+      if (item.type === 'image') return true;
       const content = item.content || '';
       return content.toLowerCase().includes(searchText);
     });

@@ -33,4 +33,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   showConfirmDialog: (message) => ipcRenderer.invoke('show-confirm-dialog', message),
   onWindowShow: (callback) => ipcRenderer.on('window-show', callback),
   setMouseInWindow: (value) => ipcRenderer.send('set-mouse-in-window', value),
+  onFocusSearch: (callback) => {
+    ipcRenderer.on('focus-search', () => callback());
+  },
 });

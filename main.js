@@ -38,7 +38,6 @@ function createWindow() {
     show: false,
     type: 'splash',
     hasShadow: false,
-    // 移除 titleBarStyle 和 titleBarOverlay
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -72,6 +71,11 @@ function createWindow() {
       event.preventDefault();
       hideWindow();
     }
+    // 添加 ESC 键处理
+    if (input.key === 'Escape' && isVisible) {
+      event.preventDefault();
+      hideWindow();
+    }
   });
 
   // 添加窗口事件监听
@@ -94,13 +98,22 @@ function createWindow() {
     `);
   });
   
+  // 修改窗口加载完成事件
+  mainWindow.webContents.on('did-finish-load', () => {
+    // 首次加载完成后显示窗口
+    showWindow();
+    isShortcutTriggered = true;
+    mouseInWindow = true;
+  });
+
+  // 修改 blur 事件处理
   mainWindow.on('blur', () => {
     // 检查是否有模态对话框打开
     const modalWindows = BrowserWindow.getAllWindows().filter(win => 
       win.isModal() && win.isVisible()
     );
     
-    // 如果鼠标在窗口内或有模态窗口，不隐藏
+    // 只在有模态窗口或鼠标在窗口内时不隐藏
     if (modalWindows.length > 0 || mouseInWindow) {
       return;
     }
@@ -180,18 +193,13 @@ app.whenReady().then(() => {
   // 启动剪贴板监视
   clipboardManager.startWatching();
   
-  // 显示初始窗口并设置初始状态
-  isShortcutTriggered = true; // 设置初始状态
-  showWindow();
-  
-  // 移除这两行
-  // if (mainWindow) {
-  //   mainWindow.hide();
-  //   isVisible = false;
-  // }
-  
-  // 显示初始窗口
-  showWindow();
+  // 注册搜索快捷键
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.key.toLowerCase() === 'f' && input.meta && isVisible) {
+      event.preventDefault();
+      mainWindow.webContents.send('focus-search');
+    }
+  });
   
   // 修改剪贴板变化监听，移除 isVisible 检查
   clipboardManager.onChange((history) => {
@@ -256,13 +264,14 @@ ipcMain.handle('show-confirm-dialog', async (event, message) => {
   mainWindow.focus();
   
   const result = await dialog.showMessageBox(mainWindow, {
-    type: 'warning',
+    type: 'none',
     title: '确认',
     message: message,
     buttons: ['确定', '取消'],
     defaultId: 1,
     cancelId: 1,
-    modal: true  // 确保是模态对话框
+    modal: true,
+    icon: path.join(__dirname, 'assets', 'warning.png')
   });
   
   return result.response === 0;
